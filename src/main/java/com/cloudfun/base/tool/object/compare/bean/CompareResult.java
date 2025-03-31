@@ -4,6 +4,8 @@ import com.cloudfun.base.tool.object.compare.anno.Id;
 import com.cloudfun.base.tool.object.compare.anno.Name;
 import com.cloudfun.base.tool.object.compare.contants.CompareType;
 
+import java.util.List;
+
 /**
  * @author cloudgc
  * @apiNote
@@ -36,14 +38,19 @@ public class CompareResult {
      * <p>
      * all type convert to  string
      */
-    private String oldValue;
+    private String originValue;
 
     /**
      * after change value
      * <p>
      * all type convert to string
      */
-    private String newValue;
+    private String targetValue;
+
+    /**
+     * inner bean the ref field
+     */
+    private List<CompareResult> children;
 
 
     public String getField() {
@@ -70,19 +77,27 @@ public class CompareResult {
         this.compareType = compareType;
     }
 
-    public String getOldValue() {
-        return oldValue;
+    public String getOriginValue() {
+        return originValue;
     }
 
-    public void setOldValue(String oldValue) {
-        this.oldValue = oldValue;
+    public void setOriginValue(String originValue) {
+        this.originValue = originValue;
     }
 
-    public String getNewValue() {
-        return newValue;
+    public String getTargetValue() {
+        return targetValue;
     }
 
-    public void setNewValue(String newValue) {
-        this.newValue = newValue;
+    public void setTargetValue(String targetValue) {
+        this.targetValue = targetValue;
+    }
+
+    public List<CompareResult> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<CompareResult> children) {
+        this.children = children;
     }
 }

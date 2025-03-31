@@ -4,6 +4,7 @@ import com.cloudfun.base.tool.object.compare.bean.CompareResult;
 import com.cloudfun.base.tool.object.compare.exception.CompareException;
 import com.cloudfun.base.tool.object.compare.option.CompareOption;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,8 +26,19 @@ public class ObjectCompare {
      * @return field change value list
      * @throws CompareException parse object error
      */
-    public static List<CompareResult> simpleBean(Object origin, Object target, CompareOption option) throws CompareException {
-        return null;
+    public static List<CompareResult> simpleBean(Object origin, Object target, CompareOption option){
+        if (origin == null && target == null) {
+            return Collections.emptyList();
+        }
+
+
+
+
+
+
+
+
+        return Collections.emptyList();
     }
 
 
@@ -41,7 +53,7 @@ public class ObjectCompare {
      * @return field change value list
      * @throws CompareException parse object error
      */
-    public static List<CompareResult> simpleBean(Object origin, Object target) throws CompareException {
+    public static List<CompareResult> simpleBean(Object origin, Object target){
         return simpleBean(origin, target, CompareOption.DEFAULT);
     }
 

@@ -1,10 +1,10 @@
 package com.cloudfun.base.tool.object.compare;
 
+import com.cloudfun.base.tool.object.compare.bean.BeanFieldAnnotation;
+import com.cloudfun.base.tool.object.compare.option.CompareOption;
 import com.cloudfun.base.tool.object.compare.tool.BeanInfoTool;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 
 /**
  * @author cloudgc
@@ -15,12 +15,20 @@ class ObjectCompareTest {
 
 
     @Test
-    public void test1() throws IntrospectionException {
+    public void test1() {
+        //
+        // BeanFieldAnnotation fieldList = BeanInfoTool.getFieldList(new User(), null, CompareOption.DEFAULT);
+        // Assertions.assertAll("getField", () -> {
+        //     Assertions.assertNotNull(fieldList.getIdField());
+        // });
 
-        BeanInfo beanInfo = BeanInfoTool.getBeanInfo(new User());
+        CompareOption compareOption = new CompareOption();
+        compareOption.setOnlyNameAnnotation(false);
 
-        System.out.println(beanInfo);
-
+        BeanFieldAnnotation fieldListA = BeanInfoTool.getFieldList(new User(), null, compareOption);
+        Assertions.assertAll("getField", () -> {
+            Assertions.assertNotNull(fieldListA.getIdField());
+        });
 
     }
 }
