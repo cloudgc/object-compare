@@ -68,14 +68,13 @@ public class BeanCompare {
                 result.setCompareType(compareValue);
                 result.setOriginValue(BeanValueFormat.primitiveFormat(originValue, beanFieldDetail, option));
                 result.setOriginValue(BeanValueFormat.primitiveFormat(targetValue, beanFieldDetail, option));
-
             } else {
                 // ref bean type compare
-                List<CompareResult> compare = compare(originValue, targetValue, option);
-                result.setChildren(compare);
-                CompareType compareValue = getCompareTypeByResultList(compare, originValue, targetValue);
+                List<CompareResult> compareChildBean = compare(originValue, targetValue, option);
+                result.setChildren(compareChildBean);
+                CompareType compareValue = getCompareTypeByResultList(compareChildBean, originValue, targetValue);
                 result.setCompareType(compareValue);
-                result.setChildren(compare);
+                result.setChildren(compareChildBean);
             }
             compareResultList.add(result);
         }
@@ -100,7 +99,7 @@ public class BeanCompare {
         }
 
         for (CompareResult result : compare) {
-            if (CompareType.NONE.equals(result.getCompareType())) {
+            if (CompareType.CHANGE.equals(result.getCompareType())) {
                 return CompareType.CHANGE;
             }
         }
@@ -108,7 +107,6 @@ public class BeanCompare {
         return CompareType.NONE;
     }
 
-    @SuppressWarnings("unchecked")
     private CompareType getCompareValueType(Object originValue, Object targetValue) {
         if (originValue == null && targetValue == null) {
             return CompareType.NONE;
@@ -119,19 +117,22 @@ public class BeanCompare {
             return CompareType.DELETE;
         }
 
+
         Class<?> beanClass = BeanInfoTool.getBeanClass(originValue, targetValue);
-        if (Comparable.class.isAssignableFrom(beanClass)) {
-            boolean compareResult = ((Comparable) originValue).compareTo((Comparable) targetValue) != 0;
-            if (compareResult) {
+        if (beanClass == null || !Comparable.class.isAssignableFrom(beanClass)) {
+            // if not comparable, use equals
+            return originValue.equals(targetValue) ? CompareType.NONE : CompareType.CHANGE;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            int compareResult = ((Comparable<Object>) originValue).compareTo(targetValue);
+            if (compareResult != 0) {
                 return CompareType.CHANGE;
             }
-        }
-        if (originValue.equals(targetValue)) {
-            return CompareType.NONE;
-        } else {
+            return originValue.equals(targetValue) ? CompareType.NONE : CompareType.CHANGE;
+        } catch (ClassCastException | NullPointerException e) {
             return CompareType.CHANGE;
         }
-
 
     }
 

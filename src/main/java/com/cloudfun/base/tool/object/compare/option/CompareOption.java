@@ -1,8 +1,14 @@
 package com.cloudfun.base.tool.object.compare.option;
 
+import com.cloudfun.base.tool.object.compare.contants.CompareType;
+import com.cloudfun.base.tool.object.compare.tool.BeanValueFormat;
+
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author cloudgc
@@ -31,6 +37,13 @@ public class CompareOption {
      */
     private boolean onlyNameAnnotation = true;
 
+    /**
+     * print log only value change
+     */
+    private boolean onlyPrintValueChange = true;
+
+    private Map<Class<?>, BeanValueFormat> typeBeanValueFormat = Collections.emptyMap();
+
     private NumberFormat numberFormat = getDefaultNumberFormat();
 
     private DateTimeFormatter dateTimeFormat = getDateTimeFormat("yyyy-MM-dd HH:mm:ss");
@@ -39,6 +52,9 @@ public class CompareOption {
 
     private DateTimeFormatter timeFormat = getDateTimeFormat("HH:mm:ss");
 
+    private String printFieldFormat = "{fieldName}[{compareType}]: {originValue:} -> {targetValue:}";
+
+    private Function<CompareType, String> compareTypeFormat = Enum::toString;
 
     public boolean getOnlyNameAnnotation() {
         return onlyNameAnnotation;
@@ -109,4 +125,35 @@ public class CompareOption {
     }
 
 
+    public Map<Class<?>, BeanValueFormat> getTypeBeanValueFormat() {
+        return typeBeanValueFormat;
+    }
+
+    public void setTypeBeanValueFormat(Map<Class<?>, BeanValueFormat> typeBeanValueFormat) {
+        this.typeBeanValueFormat = typeBeanValueFormat;
+    }
+
+    public boolean isOnlyPrintValueChange() {
+        return onlyPrintValueChange;
+    }
+
+    public void setOnlyPrintValueChange(boolean onlyPrintValueChange) {
+        this.onlyPrintValueChange = onlyPrintValueChange;
+    }
+
+    public String getPrintFieldFormat() {
+        return printFieldFormat;
+    }
+
+    public void setPrintFieldFormat(String printFieldFormat) {
+        this.printFieldFormat = printFieldFormat;
+    }
+
+    public Function<CompareType, String> getCompareTypeFormat() {
+        return compareTypeFormat;
+    }
+
+    public void setCompareTypeFormat(Function<CompareType, String> compareTypeFormat) {
+        this.compareTypeFormat = compareTypeFormat;
+    }
 }

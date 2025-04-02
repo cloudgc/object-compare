@@ -52,6 +52,7 @@ public class CompareResult {
      */
     private List<CompareResult> children;
 
+    private boolean isArray;
 
     public String getField() {
         return field;
@@ -99,5 +100,13 @@ public class CompareResult {
 
     public void setChildren(List<CompareResult> children) {
         this.children = children;
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
+    public void setArray(boolean array) {
+        isArray = array;
     }
 }

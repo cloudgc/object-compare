@@ -1,14 +1,18 @@
 package com.cloudfun.base.tool.object.compare.tool;
 
+import com.cloudfun.base.tool.object.compare.anno.Name;
 import com.cloudfun.base.tool.object.compare.bean.BeanFieldDetail;
+import com.cloudfun.base.tool.object.compare.exception.CompareException;
 import com.cloudfun.base.tool.object.compare.option.CompareOption;
 
 import java.lang.reflect.Field;
-import java.text.NumberFormat;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.chrono.ChronoLocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
+import java.util.Date;
 
 /**
  * @author cloudgc
@@ -18,12 +22,28 @@ import java.time.temporal.TemporalAccessor;
 public interface BeanValueFormat {
 
 
-
     static String primitiveFormat(Object value, BeanFieldDetail beanFieldDetail, CompareOption option) {
 
         if (value == null) {
             return null;
         }
+
+        Name nameAnno = beanFieldDetail.getFieldProperty().getAnnotation(Name.class);
+        if (nameAnno != null && !nameAnno.formatType().equals(BeanValueFormat.class)) {
+            // use  format type to format
+            try {
+                BeanValueFormat beanValueFormat = (BeanValueFormat) nameAnno.formatType().getDeclaredConstructor().newInstance();
+                return beanValueFormat.format(value, beanFieldDetail, option);
+            } catch (Exception e) {
+                throw new CompareException(e);
+            }
+        }
+
+        if (option.getTypeBeanValueFormat() != null && option.getTypeBeanValueFormat().containsKey(value.getClass())) {
+            return option.getTypeBeanValueFormat().get(value.getClass()).format(value, beanFieldDetail, option);
+        }
+
+
         Field fieldProperty = beanFieldDetail.getFieldProperty();
         if (fieldProperty.getType().getName().equals("double")
                 || fieldProperty.getType().getName().equals("float")
@@ -34,21 +54,17 @@ public interface BeanValueFormat {
             return value.toString();
         }
 
-        if (value instanceof TemporalAccessor) {
-            return option.getDateTimeFormat().format((TemporalAccessor) value);
-        }
+        return switch (value) {
+            case LocalDateTime ignored -> option.getDateTimeFormat().format((TemporalAccessor) value);
+            case LocalDate ignored -> option.getDateFormat().format((TemporalAccessor) value);
+            case LocalTime ignored -> option.getTimeFormat().format((TemporalAccessor) value);
+            case Date ignored ->
+                    option.getDateFormat().format(((Date) value).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            case BigDecimal ignored -> option.getNumberFormat().format(value);
+            default -> value.toString();
+        };
 
 
-
-
-
-
-
-
-
-
-
-        return value.toString();
     }
 
 
