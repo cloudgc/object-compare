@@ -60,11 +60,11 @@ public class BeanCompare {
             Method readMethod = beanFieldDetail.getPropertyDescriptor().getReadMethod();
 
             Object originValue = getFieldValue(readMethod, origin);
-            Object targetValue = getFieldValue(readMethod, origin);
+            Object targetValue = getFieldValue(readMethod, target);
 
             if (BeanInfoTool.isPrimitive(fieldType)) {
                 // primitive type compare
-                CompareType compareValue = getCompareValueType(readMethod, targetValue);
+                CompareType compareValue = getCompareValueType(originValue, targetValue);
                 result.setCompareType(compareValue);
                 result.setOriginValue(BeanValueFormat.primitiveFormat(originValue, beanFieldDetail, option));
                 result.setOriginValue(BeanValueFormat.primitiveFormat(targetValue, beanFieldDetail, option));
