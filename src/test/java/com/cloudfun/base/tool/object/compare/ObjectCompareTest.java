@@ -43,7 +43,7 @@ class ObjectCompareTest {
         result.setCompareType(CompareType.CHANGE);
         result.setOriginValue("18");
         result.setTargetValue("20");
-        result.setArray(false);
+        result.setCollection(false);
         list.add(result);
 
         CompareResult result1 = new CompareResult();
@@ -52,7 +52,7 @@ class ObjectCompareTest {
         result1.setCompareType(CompareType.ADD);
         result1.setOriginValue(null);
         result1.setTargetValue("Tom");
-        result1.setArray(false);
+        result1.setCollection(false);
         list.add(result1);
 
         CompareResult result2 = new CompareResult();
@@ -61,7 +61,7 @@ class ObjectCompareTest {
         result2.setCompareType(CompareType.ADD);
         result2.setOriginValue(null);
         result2.setTargetValue(null);
-        result2.setArray(true);
+        result2.setCollection(true);
 
         List<CompareResult> list2 = new ArrayList<>();
         CompareResult result3 = new CompareResult();
@@ -70,7 +70,7 @@ class ObjectCompareTest {
         result3.setCompareType(CompareType.CHANGE);
         result3.setOriginValue("上海");
         result3.setTargetValue("北京");
-        result3.setArray(false);
+        result3.setCollection(false);
         list2.add(result3);
 
 
@@ -80,7 +80,7 @@ class ObjectCompareTest {
         result4.setCompareType(CompareType.CHANGE);
         result4.setOriginValue("南京");
         result4.setTargetValue("杭州");
-        result4.setArray(false);
+        result4.setCollection(false);
         list2.add(result4);
 
         result2.setChildren(list2);

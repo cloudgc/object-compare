@@ -1,7 +1,5 @@
 package com.cloudfun.base.tool.object.compare.bean;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -10,8 +8,6 @@ import java.util.List;
  * @since 2025/3/31 11:41
  */
 public class BeanFieldAnnotation {
-
-
 
 
     private BeanFieldDetail idField;

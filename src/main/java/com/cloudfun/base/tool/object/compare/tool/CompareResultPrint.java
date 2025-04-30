@@ -67,7 +67,7 @@ public class CompareResultPrint {
                 sb.append(suffixPartStr).append("\n");
             } else {
                 sb.append("\n");
-                if (result.isArray()) {
+                if (result.isCollection()) {
                     innerPrint(result.getChildren(), option, sb, prefix  +"    ", "  - ");
                 } else {
                     innerPrint(result.getChildren(), option, sb, prefix +"  ", DEFAULT_EMPTY_STR);

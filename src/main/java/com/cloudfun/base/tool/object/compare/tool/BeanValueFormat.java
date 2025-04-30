@@ -22,6 +22,20 @@ import java.util.Date;
 public interface BeanValueFormat {
 
 
+    /**
+     * format value to string
+     *
+     * <pre>
+     *   if  @Name.formatType() has value use this format first
+     *      or  use  option config
+     *   final use Object.toString()
+     * </pre>
+     *
+     * @param value           bean field value
+     * @param beanFieldDetail parse bean field meta info
+     * @param option          format config
+     * @return format value result
+     */
     static String primitiveFormat(Object value, BeanFieldDetail beanFieldDetail, CompareOption option) {
 
         if (value == null) {
@@ -45,9 +59,7 @@ public interface BeanValueFormat {
 
 
         Field fieldProperty = beanFieldDetail.getFieldProperty();
-        if (fieldProperty.getType().getName().equals("double")
-                || fieldProperty.getType().getName().equals("float")
-                || value instanceof Double || value instanceof Float) {
+        if (fieldProperty.getType().getName().equals("double") || fieldProperty.getType().getName().equals("float") || value instanceof Double || value instanceof Float) {
             return option.getNumberFormat().format(value);
         }
         if (beanFieldDetail.getFieldProperty().getType().isPrimitive() || value instanceof String) {

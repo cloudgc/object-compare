@@ -118,9 +118,15 @@ public class BeanInfoTool {
                     Id annotation = declaredField.getAnnotation(Id.class);
                     // must self level bean has id anno, so use or ignore
                     if (propertyDescriptorsInSelfList.stream().anyMatch(p -> p.getDisplayName().equals(declaredField.getName()))) {
-                        idMethod = new BeanFieldDetail(declaredField.getName(), annotation.value(), declaredField, beanProperDesc.get());
+                        idMethod = new BeanFieldDetail(declaredField.getName(),
+                                getFieldName(annotation.value(), declaredField.getName()),
+                                declaredField,
+                                beanProperDesc.get());
                     } else {
-                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(), annotation.value(), declaredField, beanProperDesc.get()));
+                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
+                                getFieldName(annotation.value(), declaredField.getName()),
+                                declaredField,
+                                beanProperDesc.get()));
                     }
                     continue;
                 }
@@ -129,7 +135,10 @@ public class BeanInfoTool {
                 if (option.getOnlyNameAnnotation()) {
                     if (declaredField.isAnnotationPresent(Name.class)) {
                         Name annotation = declaredField.getAnnotation(Name.class);
-                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(), annotation.value(), declaredField, beanProperDesc.get()));
+                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
+                                getFieldName(annotation.value(), declaredField.getName()),
+                                declaredField,
+                                beanProperDesc.get()));
                     }
                 } else {
                     nameMethodList.add(new BeanFieldDetail(declaredField.getName(), declaredField.getName(), declaredField, beanProperDesc.get()));
@@ -145,6 +154,14 @@ public class BeanInfoTool {
         return beanFieldCache;
 
     }
+
+    private static String getFieldName(String annotationValue, String fieldName) {
+        if (annotationValue == null || annotationValue.isEmpty()) {
+            return fieldName;
+        }
+        return annotationValue;
+    }
+
 
 
     private static void findParentBeanField(Class<?> beanClass, BeanFieldAnnotation beanFieldAnnotation,

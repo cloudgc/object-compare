@@ -67,11 +67,10 @@ public class BeanCompare {
                 CompareType compareValue = getCompareValueType(originValue, targetValue);
                 result.setCompareType(compareValue);
                 result.setOriginValue(BeanValueFormat.primitiveFormat(originValue, beanFieldDetail, option));
-                result.setOriginValue(BeanValueFormat.primitiveFormat(targetValue, beanFieldDetail, option));
+                result.setTargetValue(BeanValueFormat.primitiveFormat(targetValue, beanFieldDetail, option));
             } else {
                 // ref bean type compare
                 List<CompareResult> compareChildBean = compare(originValue, targetValue, option);
-                result.setChildren(compareChildBean);
                 CompareType compareValue = getCompareTypeByResultList(compareChildBean, originValue, targetValue);
                 result.setCompareType(compareValue);
                 result.setChildren(compareChildBean);

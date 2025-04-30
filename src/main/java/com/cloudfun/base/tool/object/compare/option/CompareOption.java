@@ -42,6 +42,11 @@ public class CompareOption {
      */
     private boolean onlyPrintValueChange = true;
 
+    /**
+     * global type format
+     * <p>
+     * priority:  after @Name annotation  before this option config
+     */
     private Map<Class<?>, BeanValueFormat> typeBeanValueFormat = Collections.emptyMap();
 
     private NumberFormat numberFormat = getDefaultNumberFormat();
@@ -52,8 +57,11 @@ public class CompareOption {
 
     private DateTimeFormatter timeFormat = getDateTimeFormat("HH:mm:ss");
 
-    private String printFieldFormat = "{fieldName}[{compareType}]: {originValue:} -> {targetValue:}";
+    private String printFieldFormat = "{fieldName}[{compareType}]: {originValue:/} -> {targetValue:/}";
 
+    /**
+     * for print use  CompareType to friendly print  {compareType} -> CompareType.toString()
+     */
     private Function<CompareType, String> compareTypeFormat = Enum::toString;
 
     public boolean getOnlyNameAnnotation() {

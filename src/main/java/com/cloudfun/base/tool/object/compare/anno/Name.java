@@ -15,9 +15,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Name {
-    String value();
 
-    String format() default "";
+    String value() default "";
 
     Class<?> formatType() default BeanValueFormat.class;
 
