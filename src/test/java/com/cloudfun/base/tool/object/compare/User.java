@@ -1,7 +1,11 @@
 package com.cloudfun.base.tool.object.compare;
 
-import com.cloudfun.base.tool.object.compare.anno.Id;
 import com.cloudfun.base.tool.object.compare.anno.Name;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cloudgc
@@ -31,6 +35,18 @@ public class User extends ParentUser{
     private boolean type4;
 
     private Double type5;
+
+    private String[] type6;
+
+    private int[] type61;
+
+    private Map<Integer, String> type7;
+
+    private List<Integer> type8;
+
+    private Set<String> type9;
+
+    private Collection<String> type10;
 
 
     public Long getId() {
@@ -111,5 +127,53 @@ public class User extends ParentUser{
 
     public void setType5(Double type5) {
         this.type5 = type5;
+    }
+
+    public String[] getType6() {
+        return type6;
+    }
+
+    public void setType6(String[] type6) {
+        this.type6 = type6;
+    }
+
+    public Map<Integer, String> getType7() {
+        return type7;
+    }
+
+    public void setType7(Map<Integer, String> type7) {
+        this.type7 = type7;
+    }
+
+    public List<Integer> getType8() {
+        return type8;
+    }
+
+    public void setType8(List<Integer> type8) {
+        this.type8 = type8;
+    }
+
+    public Set<String> getType9() {
+        return type9;
+    }
+
+    public void setType9(Set<String> type9) {
+        this.type9 = type9;
+    }
+
+    public Collection<String> getType10() {
+        return type10;
+    }
+
+    public void setType10(Collection<String> type10) {
+        this.type10 = type10;
+    }
+
+    public int[] getType61() {
+        return type61;
+    }
+
+    public void setType61(int[] type61) {
+        this.type61 = type61;
     }
 }

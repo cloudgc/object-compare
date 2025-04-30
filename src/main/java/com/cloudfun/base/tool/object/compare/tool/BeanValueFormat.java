@@ -65,6 +65,28 @@ public interface BeanValueFormat {
         if (beanFieldDetail.getFieldProperty().getType().isPrimitive() || value instanceof String) {
             return value.toString();
         }
+        return primitiveFormat(value, option);
+
+    }
+
+    /**
+     * format value to string
+     *
+     * <pre>
+     *   if  @Name.formatType() has value use this format first
+     *      or  use  option config
+     *   final use Object.toString()
+     * </pre>
+     *
+     * @param value           bean field value
+     * @param option          format config
+     * @return format value result
+     */
+    static String primitiveFormat(Object value, CompareOption option) {
+
+        if (value == null) {
+            return null;
+        }
 
         return switch (value) {
             case LocalDateTime ignored -> option.getDateTimeFormat().format((TemporalAccessor) value);
@@ -78,6 +100,8 @@ public interface BeanValueFormat {
 
 
     }
+
+
 
 
     String format(Object value, BeanFieldDetail beanFieldDetail, CompareOption option);

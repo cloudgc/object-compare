@@ -108,6 +108,8 @@ class ObjectCompareTest {
         user.setName("tom");
         user.setAge(18);
         user.setType((byte) 1);
+        user.setType6(new String[]{"1", "2"});
+        user.setType8(List.of(1));
 
         User user2 = new User();
         user2.setId(1L);
@@ -123,5 +125,17 @@ class ObjectCompareTest {
         String print = CompareResultPrint.print(compare1, CompareOption.DEFAULT);
 
         System.out.println(print);
+
+
+        List<CompareResult> compare2 = compare.compare(null, user, aDefault);
+        String print2 = CompareResultPrint.print(compare2, CompareOption.DEFAULT);
+
+        System.out.println(print2);
+
+        // Map<Integer, String> c = new HashMap<>();
+        // compare.compareCollection(c, user, aDefault);
+
+
+
     }
 }

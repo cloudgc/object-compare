@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -37,7 +38,33 @@ public class BeanInfoTool {
     private static final Map<Class<?>, BeanFieldAnnotation> BEAN_FIELD_CACHE = new ConcurrentHashMap<>();
 
     public static Class<?> getBeanClass(Object origin, Object target) {
+        if (origin == null && target == null) {
+            return Object.class;
+        }
         return origin == null ? target.getClass() : origin.getClass();
+    }
+
+
+    public static Class<?> getCollectionRawClass(Object origin, Object target) {
+        if (origin == null && target == null) {
+            return Object.class;
+        }
+        if (origin != null && !isCollectionType(origin.getClass())) {
+            return Object.class;
+        }
+
+        if (origin != null && !isCollectionType(target.getClass())) {
+            return Object.class;
+        }
+
+
+        Collection<?> collection = origin != null ? (Collection<?>) origin : (Collection<?>) target;
+
+        if (collection.isEmpty()) {
+            return Object.class;
+        }
+        Object next = collection.iterator().next();
+        return next.getClass();
     }
 
 
@@ -163,7 +190,6 @@ public class BeanInfoTool {
     }
 
 
-
     private static void findParentBeanField(Class<?> beanClass, BeanFieldAnnotation beanFieldAnnotation,
                                             CompareOption option, List<PropertyDescriptor> propertyDescriptorsList) {
         if (beanClass.getSuperclass() == null || Object.class.equals(beanClass)) {
@@ -206,7 +232,7 @@ public class BeanInfoTool {
     }
 
 
-    public static boolean isPrimitive(Class<?> type) {
+    protected static boolean isPrimitive(Class<?> type) {
         if (type == null) {
             return true;
         }
@@ -232,6 +258,22 @@ public class BeanInfoTool {
         }
 
         return false;
+    }
+
+    protected static boolean isCollectionType(Class<?> fieldType) {
+        if (fieldType == null) {
+            return false;
+        }
+        if (fieldType.isArray()) {
+            return true;
+        }
+
+        if (Collection.class.isAssignableFrom(fieldType)) {
+            return true;
+        }
+
+        return Map.class.isAssignableFrom(fieldType);
+
     }
 
 }
