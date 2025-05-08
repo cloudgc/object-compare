@@ -8,6 +8,7 @@ import com.cloudfun.base.tool.object.compare.tool.BeanCompare;
 import com.cloudfun.base.tool.object.compare.tool.BeanInfoTool;
 import com.cloudfun.base.tool.object.compare.tool.CompareResultPrint;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -137,5 +138,19 @@ class ObjectCompareTest {
 
 
 
+    }
+
+    @Test
+    @DisplayName("testArray")
+    public void testArray() {
+        BeanCompare compare = new BeanCompare();
+        CompareOption aDefault = CompareOption.DEFAULT;
+        aDefault.setOnlyPrintValueChange(false);
+        String[] a = new String[]{"1", "2"};
+        String[] b = new String[]{ };
+
+        List<CompareResult> compareResultList = compare.compareCollection(a, b, aDefault);
+        String print2 = CompareResultPrint.print(compareResultList, aDefault);
+        System.out.println(print2);
     }
 }

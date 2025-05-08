@@ -7,6 +7,7 @@ import com.cloudfun.base.tool.object.compare.bean.BeanFieldAnnotation;
 import com.cloudfun.base.tool.object.compare.bean.BeanFieldDetail;
 import com.cloudfun.base.tool.object.compare.exception.CompareException;
 import com.cloudfun.base.tool.object.compare.option.CompareOption;
+import com.cloudfun.base.tool.object.compare.util.ObjectUtil;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -46,25 +47,52 @@ public class BeanInfoTool {
 
 
     public static Class<?> getCollectionRawClass(Object origin, Object target) {
-        if (origin == null && target == null) {
+
+        if (ObjectUtil.isEmpty(origin) && ObjectUtil.isEmpty(target)) {
             return Object.class;
         }
+
         if (origin != null && !isCollectionType(origin.getClass())) {
             return Object.class;
         }
 
-        if (origin != null && !isCollectionType(target.getClass())) {
+        if (target != null && !isCollectionType(target.getClass())) {
             return Object.class;
         }
 
 
-        Collection<?> collection = origin != null ? (Collection<?>) origin : (Collection<?>) target;
+        Collection<?> collection = ObjectUtil.isEmpty(origin) ? (Collection<?>) origin : (Collection<?>) target;
 
         if (collection.isEmpty()) {
             return Object.class;
         }
         Object next = collection.iterator().next();
         return next.getClass();
+    }
+
+    public static Class<?> getMapValueClass(Object origin, Object target) {
+        if (ObjectUtil.isEmpty(origin) && ObjectUtil.isEmpty(target)) {
+            return Object.class;
+        }
+
+        if (origin != null && !isCollectionType(origin.getClass())) {
+            return Object.class;
+        }
+
+        if (target != null && !isCollectionType(target.getClass())) {
+            return Object.class;
+        }
+
+
+
+        Map<?, ?> collection = ObjectUtil.isEmpty(origin) ? (Map<?, ?>) origin : (Map<?, ?>) target;
+        if (collection.isEmpty()) {
+            return Object.class;
+        }
+        Object next = collection.values().iterator().next();
+
+        return next.getClass();
+
     }
 
 
@@ -253,11 +281,7 @@ public class BeanInfoTool {
         if (Date.class.isAssignableFrom(type)) {
             return true;
         }
-        if (Number.class.isAssignableFrom(type)) {
-            return true;
-        }
-
-        return false;
+        return Number.class.isAssignableFrom(type);
     }
 
     protected static boolean isCollectionType(Class<?> fieldType) {
@@ -276,4 +300,20 @@ public class BeanInfoTool {
 
     }
 
+    /**
+     * check java bean mark {@link Id} field
+     * @param beanClass
+     * @return
+     */
+    public static boolean hasIdField(Class<?> beanClass, CompareOption option) {
+        if (BeanInfoTool.isPrimitive(beanClass)) {
+            return false;
+        }
+
+        BeanInfoTool.getFieldList(beanClass, beanClass, option);
+
+
+
+        return false;
+    }
 }
