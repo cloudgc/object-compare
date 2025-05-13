@@ -7,6 +7,7 @@ import com.cloudfun.base.tool.object.compare.option.CompareOption;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -92,6 +93,13 @@ public interface BeanValueFormat {
             case LocalDateTime ignored -> option.getDateTimeFormat().format((TemporalAccessor) value);
             case LocalDate ignored -> option.getDateFormat().format((TemporalAccessor) value);
             case LocalTime ignored -> option.getTimeFormat().format((TemporalAccessor) value);
+
+            case java.sql.Time ignored-> option.getTimeFormat().format(((java.sql.Time) value).toLocalTime());
+            case java.sql.Date ignored ->
+                    option.getDateFormat().format(((java.sql.Date) value).toLocalDate());
+            case Timestamp ignored ->
+                    option.getDateTimeFormat().format(((Timestamp) value).toLocalDateTime());
+
             case Date ignored ->
                     option.getDateFormat().format(((Date) value).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
             case BigDecimal ignored -> option.getNumberFormat().format(value);

@@ -16,8 +16,32 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Name {
 
+    /**
+     * for  CompareResult.fieldName
+     */
     String value() default "";
 
+    /**
+     * set CompareResult.originValue/targetValue format
+     */
     Class<?> formatType() default BeanValueFormat.class;
+
+
+    /**
+     * array field compare by sort value or not
+     *
+     * <pre>
+     *      private int [] array;
+     *      origin array = {1,2,3}
+     *      target array = {3,2,1}
+     *
+     *      if ignoreArraySort = false:
+     *          CompareResult = change
+     *
+     *      if ignoreArraySort = true:
+     *          CompareResult = none
+     * </pre>
+     */
+    boolean ignoreArraySort() default false;
 
 }

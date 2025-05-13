@@ -123,6 +123,7 @@ public class CompareOption {
 
     static NumberFormat getDefaultNumberFormat() {
         NumberFormat instance = NumberFormat.getInstance();
+        instance.setGroupingUsed(false);
         instance.setRoundingMode(RoundingMode.HALF_UP);
         instance.setMaximumFractionDigits(2);
         return instance;

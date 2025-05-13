@@ -61,7 +61,7 @@ public class BeanInfoTool {
         }
 
 
-        Collection<?> collection = ObjectUtil.isEmpty(origin) ? (Collection<?>) origin : (Collection<?>) target;
+        Collection<?> collection = ObjectUtil.isEmpty(origin) ? (Collection<?>) target : (Collection<?>) origin;
 
         if (collection.isEmpty()) {
             return Object.class;
@@ -82,7 +82,6 @@ public class BeanInfoTool {
         if (target != null && !isCollectionType(target.getClass())) {
             return Object.class;
         }
-
 
 
         Map<?, ?> collection = ObjectUtil.isEmpty(origin) ? (Map<?, ?>) origin : (Map<?, ?>) target;
@@ -127,6 +126,13 @@ public class BeanInfoTool {
 
     public static BeanFieldAnnotation getFieldList(Object origin, Object target, CompareOption option) {
 
+        Class<?> beanClass = getBeanClass(origin, target);
+
+        BeanFieldAnnotation beanFieldCache = BEAN_FIELD_CACHE.get(beanClass);
+        if (beanFieldCache != null) {
+            return beanFieldCache;
+        }
+
         // get bean info
         BeanInfo beanInfo = getBeanInfo(origin, target);
 
@@ -144,68 +150,65 @@ public class BeanInfoTool {
         List<PropertyDescriptor> propertyDescriptorsList = Arrays.asList(propertyDescriptors);
 
 
-        Class<?> beanClass = getBeanClass(origin, target);
+        BeanFieldDetail idMethod = null;
 
-        BeanFieldAnnotation beanFieldCache = BEAN_FIELD_CACHE.get(beanClass);
+        List<BeanFieldDetail> nameMethodList = new ArrayList<>();
 
-        if (beanFieldCache == null) {
+        for (Field declaredField : beanClass.getDeclaredFields()) {
 
-
-            BeanFieldDetail idMethod = null;
-
-            List<BeanFieldDetail> nameMethodList = new ArrayList<>();
-
-            for (Field declaredField : beanClass.getDeclaredFields()) {
-
-                // must define as property (with read and write method)
-                Optional<PropertyDescriptor> beanProperDesc = propertyDescriptorsList.stream()
-                        .filter(p -> p.getDisplayName().equals(declaredField.getName())).findFirst();
-                if (beanProperDesc.isEmpty()) {
-                    continue;
-                }
-
-                if (declaredField.isAnnotationPresent(Ignore.class)) {
-                    continue;
-                }
-
-
-                if (declaredField.isAnnotationPresent(Id.class)) {
-                    Id annotation = declaredField.getAnnotation(Id.class);
-                    // must self level bean has id anno, so use or ignore
-                    if (propertyDescriptorsInSelfList.stream().anyMatch(p -> p.getDisplayName().equals(declaredField.getName()))) {
-                        idMethod = new BeanFieldDetail(declaredField.getName(),
-                                getFieldName(annotation.value(), declaredField.getName()),
-                                declaredField,
-                                beanProperDesc.get());
-                    } else {
-                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
-                                getFieldName(annotation.value(), declaredField.getName()),
-                                declaredField,
-                                beanProperDesc.get()));
-                    }
-                    continue;
-                }
-
-                // use name anno or not
-                if (option.getOnlyNameAnnotation()) {
-                    if (declaredField.isAnnotationPresent(Name.class)) {
-                        Name annotation = declaredField.getAnnotation(Name.class);
-                        nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
-                                getFieldName(annotation.value(), declaredField.getName()),
-                                declaredField,
-                                beanProperDesc.get()));
-                    }
-                } else {
-                    nameMethodList.add(new BeanFieldDetail(declaredField.getName(), declaredField.getName(), declaredField, beanProperDesc.get()));
-                }
+            // must define as property (with read and write method)
+            Optional<PropertyDescriptor> beanProperDesc = propertyDescriptorsList.stream()
+                    .filter(p -> p.getDisplayName().equals(declaredField.getName())).findFirst();
+            if (beanProperDesc.isEmpty()) {
+                continue;
             }
-            BeanFieldAnnotation beanFieldAnnotation = new BeanFieldAnnotation(idMethod, nameMethodList);
-            // find in parent
-            findParentBeanField(beanClass.getSuperclass(), beanFieldAnnotation, option, propertyDescriptorsList);
 
-            BEAN_FIELD_CACHE.put(beanClass, beanFieldAnnotation);
-            beanFieldCache = beanFieldAnnotation;
+            if (declaredField.isAnnotationPresent(Ignore.class)) {
+                continue;
+            }
+
+
+            if (declaredField.isAnnotationPresent(Id.class)) {
+                Id annotation = declaredField.getAnnotation(Id.class);
+                // must self level bean has id anno, so use or ignore
+                if (propertyDescriptorsInSelfList.stream().anyMatch(p -> p.getDisplayName().equals(declaredField.getName()))) {
+
+                    if (idMethod != null && idMethod.getFieldName().equals(getFieldName(annotation.value(), declaredField.getName()))) {
+                        throw new CompareException("@Id annotation must be unique");
+                    }
+
+                    idMethod = new BeanFieldDetail(declaredField.getName(),
+                            getFieldName(annotation.value(), declaredField.getName()),
+                            declaredField,
+                            beanProperDesc.get());
+                } else {
+                    nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
+                            getFieldName(annotation.value(), declaredField.getName()),
+                            declaredField,
+                            beanProperDesc.get()));
+                }
+                continue;
+            }
+
+            // use name anno or not
+            if (option.getOnlyNameAnnotation()) {
+                if (declaredField.isAnnotationPresent(Name.class)) {
+                    Name annotation = declaredField.getAnnotation(Name.class);
+                    nameMethodList.add(new BeanFieldDetail(declaredField.getName(),
+                            getFieldName(annotation.value(), declaredField.getName()),
+                            declaredField,
+                            beanProperDesc.get()));
+                }
+            } else {
+                nameMethodList.add(new BeanFieldDetail(declaredField.getName(), declaredField.getName(), declaredField, beanProperDesc.get()));
+            }
         }
+        BeanFieldAnnotation beanFieldAnnotation = new BeanFieldAnnotation(idMethod, nameMethodList);
+        // find in parent
+        findParentBeanField(beanClass.getSuperclass(), beanFieldAnnotation, option, propertyDescriptorsList);
+
+        BEAN_FIELD_CACHE.put(beanClass, beanFieldAnnotation);
+        beanFieldCache = beanFieldAnnotation;
         return beanFieldCache;
 
     }
@@ -270,6 +273,31 @@ public class BeanInfoTool {
         if (String.class.isAssignableFrom(type)) {
             return true;
         }
+        if (Boolean.class.isAssignableFrom(type)) {
+            return true;
+        }
+
+        if (Short.class.isAssignableFrom(type)) {
+            return true;
+        }
+
+        if (Integer.class.isAssignableFrom(type)) {
+            return true;
+        }
+
+        if (Long.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (Float.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (Double.class.isAssignableFrom(type)) {
+            return true;
+        }
+
+        if (Character.class.isAssignableFrom(type)) {
+            return true;
+        }
 
         if (BigDecimal.class.isAssignableFrom(type)) {
             return true;
@@ -279,6 +307,9 @@ public class BeanInfoTool {
             return true;
         }
         if (Date.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (java.sql.Date.class.isAssignableFrom(type)) {
             return true;
         }
         return Number.class.isAssignableFrom(type);
@@ -302,18 +333,151 @@ public class BeanInfoTool {
 
     /**
      * check java bean mark {@link Id} field
-     * @param beanClass
-     * @return
      */
-    public static boolean hasIdField(Class<?> beanClass, CompareOption option) {
+    public static boolean hasIdField(Object origin, Object target, CompareOption option) {
+
+        if (origin == null || target == null) {
+            return false;
+        }
+
+        Class<?> beanClass = BeanInfoTool.getBeanClass(origin, target);
+        if (beanClass == null) {
+            return false;
+        }
         if (BeanInfoTool.isPrimitive(beanClass)) {
             return false;
         }
 
-        BeanInfoTool.getFieldList(beanClass, beanClass, option);
 
+        if (BeanInfoTool.isCollectionType(beanClass)) {
 
+            Class<?> collectionRawClass = BeanInfoTool.getCollectionRawClass(origin, target);
+            if (BeanInfoTool.isPrimitive(collectionRawClass)) {
+                return false;
+            }
+            if (BeanInfoTool.isCollectionType(collectionRawClass)) {
+                return false;
+            }
+            Collection<?> originCollection = (Collection<?>) origin;
+            Collection<?> targetCollection = (Collection<?>) target;
+            if (ObjectUtil.isEmpty(originCollection) && ObjectUtil.isEmpty(targetCollection)) {
+                return false;
+            }
+            Collection<?> collectionValue = ObjectUtil.isEmpty(originCollection) ? targetCollection : originCollection;
+            Object next = collectionValue.stream().iterator().next();
+            BeanFieldAnnotation fieldList = BeanInfoTool.getFieldList(next, null, option);
+            return fieldList.getIdField() != null;
+        }
 
+        BeanFieldAnnotation fieldList = BeanInfoTool.getFieldList(origin, target, option);
+        return fieldList.getIdField() != null;
+    }
+
+    public static List<Object> convertPrimitiveArray(Object object) {
+        switch (object) {
+            case null -> {
+                return Collections.emptyList();
+            }
+            case byte[] bytes -> {
+                List<Object> list = new ArrayList<>();
+                for (byte b : bytes) {
+                    list.add(b);
+                }
+                return list;
+            }
+            case short[] shorts -> {
+                List<Object> list = new ArrayList<>();
+                for (short s : shorts) {
+                    list.add(s);
+                }
+                return list;
+            }
+            case int[] ints -> {
+                List<Object> list = new ArrayList<>();
+                for (int i : ints) {
+                    list.add(i);
+                }
+                return list;
+            }
+            case long[] longs -> {
+                List<Object> list = new ArrayList<>();
+                for (long l : longs) {
+                    list.add(l);
+                }
+                return list;
+            }
+            case float[] floats -> {
+                List<Object> list = new ArrayList<>();
+                for (float f : floats) {
+                    list.add(f);
+                }
+                return list;
+
+            }
+            case double[] doubles -> {
+                List<Object> list = new ArrayList<>();
+                for (double d : doubles) {
+                    list.add(d);
+                }
+                return list;
+            }
+            case char[] chars -> {
+                List<Object> list = new ArrayList<>();
+                for (char c : chars) {
+                    list.add(c);
+                }
+                return list;
+            }
+            case boolean[] booleans -> {
+                List<Object> list = new ArrayList<>();
+                for (boolean b : booleans) {
+                    list.add(b);
+                }
+                return list;
+            }
+            case Object[] objects -> {
+                return new ArrayList<>(Arrays.asList(objects));
+            }
+            default -> {
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    public static boolean isNotSameClass(Object origin, Object target) {
+        if (origin == null || target == null) {
+            return false;
+        }
+
+        return !isSameClass(origin.getClass(), target.getClass());
+    }
+
+    private static boolean isSameClass(Class<?> origin, Class<?> target) {
+
+        if (origin == null || target == null) {
+            return false;
+        }
+
+        if (origin.equals(target)) {
+            return true;
+        }
+        if (origin.getSuperclass() != null && !Object.class.equals(origin.getSuperclass())) {
+            return isSameClass(origin.getSuperclass(), target.getSuperclass());
+        }
         return false;
+    }
+
+
+    public static boolean getIgnoreArraySort(Field fieldProperty) {
+        if (fieldProperty == null) {
+            return false;
+        }
+
+        if (!fieldProperty.isAnnotationPresent(Name.class)) {
+            return false;
+        }
+        Name annotation = fieldProperty.getAnnotation(Name.class);
+        return annotation.ignoreArraySort();
     }
 }

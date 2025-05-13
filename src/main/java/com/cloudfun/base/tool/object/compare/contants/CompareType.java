@@ -6,9 +6,7 @@ package com.cloudfun.base.tool.object.compare.contants;
  * @since 2025/3/28 16:53
  */
 public enum CompareType {
-    /**
-     * 1.新增 2.变更  3.删除
-     */
+
     NONE(0),
     ADD(1),
     CHANGE(2),
