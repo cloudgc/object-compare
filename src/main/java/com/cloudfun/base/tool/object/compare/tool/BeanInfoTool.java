@@ -126,6 +126,10 @@ public class BeanInfoTool {
 
     public static BeanFieldAnnotation getFieldList(Object origin, Object target, CompareOption option) {
 
+        if (origin == null && target == null) {
+            return new BeanFieldAnnotation(null, Collections.emptyList());
+        }
+
         Class<?> beanClass = getBeanClass(origin, target);
 
         BeanFieldAnnotation beanFieldCache = BEAN_FIELD_CACHE.get(beanClass);
@@ -469,7 +473,11 @@ public class BeanInfoTool {
     }
 
 
-    public static boolean getIgnoreArraySort(Field fieldProperty) {
+    public static boolean getIgnoreArraySort(BeanFieldDetail beanFieldDetail) {
+        if (beanFieldDetail == null) {
+            return false;
+        }
+        Field fieldProperty = beanFieldDetail.getFieldProperty();
         if (fieldProperty == null) {
             return false;
         }

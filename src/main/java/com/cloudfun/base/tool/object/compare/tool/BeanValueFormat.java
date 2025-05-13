@@ -43,6 +43,10 @@ public interface BeanValueFormat {
             return null;
         }
 
+        if (beanFieldDetail == null) {
+            return primitiveFormat(value, option);
+        }
+
         Name nameAnno = beanFieldDetail.getFieldProperty().getAnnotation(Name.class);
         if (nameAnno != null && !nameAnno.formatType().equals(BeanValueFormat.class)) {
             // use  format type to format

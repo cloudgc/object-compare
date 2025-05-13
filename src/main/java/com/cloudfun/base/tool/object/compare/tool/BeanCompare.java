@@ -6,19 +6,25 @@ import com.cloudfun.base.tool.object.compare.bean.CompareResult;
 import com.cloudfun.base.tool.object.compare.contants.CompareType;
 import com.cloudfun.base.tool.object.compare.exception.CompareException;
 import com.cloudfun.base.tool.object.compare.option.CompareOption;
+import com.cloudfun.base.tool.object.compare.util.ObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -79,8 +85,7 @@ public class BeanCompare {
                 List<CompareResult> compareChildBean;
                 if (BeanInfoTool.isCollectionType(fieldType)) {
                     // Collection  compare
-                    compareChildBean = compareCollection(originValue, targetValue, option,
-                            BeanInfoTool.getIgnoreArraySort(beanFieldDetail.getFieldProperty()));
+                    compareChildBean = compareCollection(originValue, targetValue, option, beanFieldDetail);
                     CompareType compareValue = getCompareTypeByResultList(compareChildBean, originValue, targetValue);
                     result.setCompareType(compareValue);
                     result.setCollection(true);
@@ -112,12 +117,12 @@ public class BeanCompare {
      * @param origin          origin collection
      * @param target          target collection
      * @param option          compare option
-     * @param ignoreArraySort ignore array sort
+     * @param beanFieldDetail collection field detail
      * @return compare result list
      */
 
     public List<CompareResult> compareCollection(Object origin, Object target, CompareOption option,
-                                            boolean ignoreArraySort) {
+                                                 BeanFieldDetail beanFieldDetail) {
         if (origin == null && target == null) {
             return Collections.emptyList();
         }
@@ -132,7 +137,7 @@ public class BeanCompare {
         }
 
         if (beanClass.isArray()) {
-            return compareArray(origin, target, option, ignoreArraySort);
+            return compareArray(origin, target, option, beanFieldDetail);
         }
 
         if (Map.class.isAssignableFrom(beanClass)) {
@@ -140,12 +145,12 @@ public class BeanCompare {
         }
 
 
-        return compareBaseCollection((Collection<?>) origin, (Collection<?>) target, option, ignoreArraySort);
+        return compareBaseCollection((Collection<?>) origin, (Collection<?>) target, option, beanFieldDetail);
     }
 
 
     private List<CompareResult> compareBaseCollection(Collection<?> origin, Collection<?> target,
-                                                      CompareOption option, boolean ignoreArraySort) {
+                                                      CompareOption option, BeanFieldDetail beanFieldDetail) {
 
         Class<?> beanClass = BeanInfoTool.getCollectionRawClass(origin, target);
         if (Object.class.equals(beanClass)) {
@@ -160,24 +165,131 @@ public class BeanCompare {
             target = Collections.emptyList();
         }
 
-        int maxSize = Math.max(origin.size(), target.size());
+        // collection compare by value set
+        if (BeanInfoTool.getIgnoreArraySort(beanFieldDetail)) {
+            return compareBaseCollectionIgnoreSort(origin, target, option, beanFieldDetail, BeanInfoTool.isPrimitive(beanClass));
+        }
 
+        boolean hasIdField = BeanInfoTool.hasIdField(origin, target, option);
+        if (hasIdField) {
+            return compareCollectionWithId(origin, target, beanFieldDetail, option, BeanInfoTool.isPrimitive(beanClass));
+        }
+
+        // compare collection by sort
+        return compareBaseCollectionBySort(origin, target, option, beanFieldDetail, BeanInfoTool.isPrimitive(beanClass));
+    }
+
+    private List<CompareResult> compareBaseCollectionIgnoreSort(Collection<?> origin, Collection<?> target, CompareOption option, BeanFieldDetail beanFieldDetail, boolean primitive) {
+        int maxSize = Math.max(origin.size(), target.size());
         Iterator<?> originIterator = origin.iterator();
         Iterator<?> targetIterator = target.iterator();
 
-        boolean primitive = BeanInfoTool.isPrimitive(beanClass);
+        Map<Object, Deque<Object>> originIndexMap = new LinkedHashMap<>();
+        Map<Object, Deque<Object>> targetIndexMap = new LinkedHashMap<>();
 
-        boolean hasIdField = BeanInfoTool.hasIdField(origin, target, option);
+        Set<Object> allIndexKey = new HashSet<>();
 
-        if (hasIdField) {
-            return compareCollectionWithId(origin, target, option);
+
+        for (int i = 0; i < maxSize; i++) {
+            Object originElement = originIterator.hasNext() ? originIterator.next() : null;
+
+            if (originElement != null) {
+
+
+                Optional<Map.Entry<Object, Deque<Object>>> originEntry = originIndexMap.entrySet().stream().filter(key -> ObjectUtil.isSame(key.getKey(),
+                        originElement)).findFirst();
+                if (originEntry.isEmpty()) {
+                    Deque<Object> originDeque = new ArrayDeque<>();
+                    originDeque.push(originElement);
+                    originIndexMap.put(originElement, originDeque);
+                } else {
+                    originEntry.get().getValue().push(originElement);
+                }
+
+
+                boolean originNotMatch = allIndexKey.stream().noneMatch(key -> ObjectUtil.isSame(key, originElement));
+                if (originNotMatch) {
+                    allIndexKey.add(originElement);
+                }
+            }
+
+            Object targetElement = targetIterator.hasNext() ? targetIterator.next() : null;
+
+            if (targetElement != null) {
+
+                Optional<Map.Entry<Object, Deque<Object>>> targetEntry = targetIndexMap.entrySet().stream().filter(key -> ObjectUtil.isSame(key.getKey(),
+                        originElement)).findFirst();
+                if (targetEntry.isEmpty()) {
+                    Deque<Object> originDeque = new ArrayDeque<>();
+                    originDeque.push(originElement);
+                    targetIndexMap.put(originElement, originDeque);
+                } else {
+                    targetEntry.get().getValue().push(originElement);
+                }
+
+
+                boolean targetNotMatch = allIndexKey.stream().noneMatch(key -> ObjectUtil.isSame(key, targetElement));
+                if (targetNotMatch) {
+                    allIndexKey.add(targetElement);
+                }
+            }
+
         }
 
+        int fieldIndex = 0;
+        List<CompareResult> compareResultList = new ArrayList<>();
+        for (Object element : allIndexKey) {
+
+            Optional<Map.Entry<Object, Deque<Object>>> originEntry = originIndexMap.entrySet().stream()
+                    .filter(key -> ObjectUtil.isSame(key.getKey(), element)).findFirst();
 
 
+            Optional<Map.Entry<Object, Deque<Object>>> targetEntry = targetIndexMap.entrySet().stream()
+                    .filter(key -> ObjectUtil.isSame(key.getKey(), element)).findFirst();
 
+            Object originElement = null;
 
+            Object targetElement = null;
+            if (originEntry.isPresent() &&  !originEntry.get().getValue().isEmpty()) {
+                originElement = originEntry.get().getValue().pop();
+            }
 
+            if (targetEntry.isPresent() &&  !targetEntry.get().getValue().isEmpty()) {
+                targetElement = targetEntry.get().getValue().pop();
+            }
+
+            //   primitive type collection
+            if (primitive) {
+                CompareResult result = new CompareResult();
+                result.setField(Integer.toString(fieldIndex));
+                result.setFieldName(Integer.toString(fieldIndex));
+                result.setCompareType(getCompareValueType(originElement, targetElement));
+                result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, beanFieldDetail, option));
+                result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, beanFieldDetail, option));
+                result.setChildren(Collections.emptyList());
+                compareResultList.add(result);
+            } else {
+                // ref bean type collection
+                CompareResult result = new CompareResult();
+                result.setField(Integer.toString(fieldIndex));
+                result.setFieldName(result.getField());
+
+                List<CompareResult> compareChildren = this.compare(originElement, targetElement, option);
+                result.setChildren(compareChildren);
+
+                CompareType compareType = this.getCompareTypeByResultList(compareChildren, originElement, targetElement);
+                result.setCompareType(compareType);
+                compareResultList.add(result);
+            }
+            fieldIndex++;
+        }
+        return compareResultList;
+    }
+
+    private List<CompareResult> compareBaseCollectionBySort(Collection<?> origin, Collection<?> target, CompareOption option, BeanFieldDetail beanFieldDetail, boolean primitive) {
+        int maxSize = Math.max(origin.size(), target.size());
+        Iterator<?> originIterator = origin.iterator();
+        Iterator<?> targetIterator = target.iterator();
         List<CompareResult> compareResultList = new ArrayList<>();
         for (int i = 0; i < maxSize; i++) {
             Object originElement = originIterator.hasNext() ? originIterator.next() : null;
@@ -189,8 +301,8 @@ public class BeanCompare {
                 result.setField(Integer.toString(i));
                 result.setFieldName(result.getField());
                 result.setCompareType(getCompareValueType(originElement, targetElement));
-                result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, option));
-                result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, option));
+                result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, beanFieldDetail, option));
+                result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, beanFieldDetail, option));
                 result.setChildren(Collections.emptyList());
                 compareResultList.add(result);
             } else {
@@ -212,60 +324,83 @@ public class BeanCompare {
     }
 
 
-    private List<CompareResult> compareCollectionWithId(Collection<?> origin, Collection<?> target, CompareOption option) {
-        // for iterator
-        if (origin == null) {
-            origin = Collections.emptyList();
-        }
-        if (target == null) {
-            target = Collections.emptyList();
-        }
-
+    private List<CompareResult> compareCollectionWithId(Collection<?> origin, Collection<?> target, BeanFieldDetail beanFieldDetail, CompareOption option, boolean primitive) {
         int maxSize = Math.max(origin.size(), target.size());
         Iterator<?> originIterator = origin.iterator();
         Iterator<?> targetIterator = target.iterator();
 
-        Set<String> keySet = new LinkedHashSet<>();
-        Map<String, Object> orginMap = new HashMap<>(maxSize);
-        Map<String, Object> targetMap = new HashMap<>(maxSize);
+        Map<Object, Object> orginMap = new HashMap<>(maxSize);
+        Map<Object, Object> targetMap = new HashMap<>(maxSize);
+
+        Set<Object> allIdIndex = new LinkedHashSet<>();
 
         for (int i = 0; i < maxSize; i++) {
-            BeanFieldAnnotation field = BeanInfoTool.getFieldList(origin, target, option);
-            if (field.getIdField() == null) {
-                return Collections.emptyList();
-            }
 
             Object originElement = originIterator.hasNext() ? originIterator.next() : null;
             Object targetElement = targetIterator.hasNext() ? targetIterator.next() : null;
 
-            BeanFieldDetail beanIdField = field.getIdField();
-            Method readMethod = beanIdField.getPropertyDescriptor().getReadMethod();
-            Object originValue = getFieldValue(readMethod, originElement);
-            Object targetValue = getFieldValue(readMethod, targetElement);
+            BeanFieldAnnotation field = BeanInfoTool.getFieldList(originElement, targetElement, option);
 
-            if (originValue != null) {
-                keySet.add(originValue.toString());
-                orginMap.put(originValue.toString(), originElement);
+            if (field.getIdField() == null) {
+                continue;
             }
 
-            if (targetValue != null) {
-                keySet.add(targetValue.toString());
-                targetMap.put(targetValue.toString(), targetElement);
+            BeanFieldDetail beanIdField = field.getIdField();
+            Method readMethod = beanIdField.getPropertyDescriptor().getReadMethod();
+            Object originIdValue = getFieldValue(readMethod, originElement);
+            Object targetIdValue = getFieldValue(readMethod, targetElement);
+
+            if (originIdValue != null) {
+                allIdIndex.add(originIdValue);
+                orginMap.put(originIdValue, originElement);
+            }
+
+            if (targetIdValue != null) {
+                allIdIndex.add(targetIdValue);
+                targetMap.put(targetIdValue, targetElement);
             }
         }
 
         List<CompareResult> compareResultList = new ArrayList<>();
 
-        for (String s : keySet) {
+        int fieldIndex = 0;
 
+        for (Object idIndex : allIdIndex) {
+            Object originElement = orginMap.get(idIndex);
+            Object targetElement = targetMap.get(idIndex);
+
+
+            //   primitive type collection
+            if (primitive) {
+                CompareResult result = new CompareResult();
+                result.setField(Integer.toString(fieldIndex));
+                result.setFieldName(Integer.toString(fieldIndex));
+                result.setCompareType(getCompareValueType(originElement, targetElement));
+                result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, beanFieldDetail, option));
+                result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, beanFieldDetail, option));
+                result.setChildren(Collections.emptyList());
+                compareResultList.add(result);
+            } else {
+                // ref bean type collection
+                CompareResult result = new CompareResult();
+                result.setField(Integer.toString(fieldIndex));
+                result.setFieldName(result.getField());
+
+                List<CompareResult> compareChildren = this.compare(originElement, targetElement, option);
+                result.setChildren(compareChildren);
+
+                CompareType compareType = this.getCompareTypeByResultList(compareChildren, originElement, targetElement);
+                result.setCompareType(compareType);
+                compareResultList.add(result);
+            }
+
+            fieldIndex++;
         }
-
-
-        return Collections.emptyList();
+        return compareResultList;
     }
 
 
-    private List<CompareResult> compareArray(Object origin, Object target, CompareOption option, boolean ignoreArraySort) {
+    private List<CompareResult> compareArray(Object origin, Object target, CompareOption option, BeanFieldDetail beanFieldDetail) {
 
         if (origin == null) {
             origin = new Object[0];
@@ -279,14 +414,14 @@ public class BeanCompare {
         if (beanClass != null && beanClass.isPrimitive()) {
             List<Object> originList = BeanInfoTool.convertPrimitiveArray(origin);
             List<Object> targetList = BeanInfoTool.convertPrimitiveArray(target);
-            return compareBaseCollection(originList, targetList, option, ignoreArraySort);
+            return compareBaseCollection(originList, targetList, option, beanFieldDetail);
 
         } else {
             Object[] originArray = (Object[]) origin;
             Object[] targetArray = (Object[]) target;
             List<Object> originList = new ArrayList<>(Arrays.asList(originArray));
             List<Object> targetList = new ArrayList<>(Arrays.asList(targetArray));
-            return compareBaseCollection(originList, targetList, option, ignoreArraySort);
+            return compareBaseCollection(originList, targetList, option, beanFieldDetail);
         }
     }
 
@@ -383,23 +518,23 @@ public class BeanCompare {
 
         Class<?> beanClass = BeanInfoTool.getBeanClass(originValue, targetValue);
 
-        CompareType compareType = originValue.equals(targetValue) ? CompareType.NONE : CompareType.CHANGE;
-
-        if (beanClass == null || !Comparable.class.isAssignableFrom(beanClass)) {
-            // if not comparable, use equals
-            return compareType;
+        if (!Comparable.class.isAssignableFrom(beanClass)) {
+            return originValue.equals(targetValue) ? CompareType.NONE : CompareType.CHANGE;
         }
+
         try {
-            @SuppressWarnings("unchecked") int compareResult = ((Comparable<Object>) originValue).compareTo(targetValue);
-            if (compareResult != 0) {
-                return CompareType.CHANGE;
+            if (Comparable.class.isAssignableFrom(beanClass)) {
+                @SuppressWarnings("unchecked") int compareResult = ((Comparable<Object>) originValue).compareTo(targetValue);
+                if (compareResult != 0) {
+                    return CompareType.CHANGE;
+                }
+                return CompareType.NONE;
             }
-            return compareType;
         } catch (ClassCastException | NullPointerException e) {
             log.error("CompareError:{}", e.getMessage());
             return CompareType.CHANGE;
         }
-
+        return CompareType.NONE;
     }
 
 

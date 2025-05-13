@@ -32,8 +32,8 @@ public @interface Name {
      *
      * <pre>
      *      private int [] array;
-     *      origin array = {1,2,3}
-     *      target array = {3,2,1}
+     *      origin array = {1,2,3,3,4}
+     *      target array = {3,2,3,4,1}
      *
      *      if ignoreArraySort = false:
      *          CompareResult = change

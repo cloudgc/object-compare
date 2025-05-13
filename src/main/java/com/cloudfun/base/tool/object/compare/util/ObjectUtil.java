@@ -31,5 +31,18 @@ public class ObjectUtil {
 
     }
 
+    public static boolean isSame(Object origin, Object target) {
+        if (origin == null || target == null) {
+            return false;
+        }
+
+        if (origin instanceof Comparable<?>) {
+            int i = ((Comparable) origin).compareTo(target);
+            return i == 0;
+        }
+
+        return origin.equals(target);
+    }
+
 
 }
