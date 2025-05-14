@@ -3,7 +3,10 @@ package com.cloudfun.base.tool.object.compare.tests;
 import com.cloudfun.base.tool.object.compare.bean.CompareResult;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBean;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBean1;
+import com.cloudfun.base.tool.object.compare.bean.SimpleBeanWithAnno;
+import com.cloudfun.base.tool.object.compare.bean.SimpleBeanWithAnno1;
 import com.cloudfun.base.tool.object.compare.contants.CompareType;
+import com.cloudfun.base.tool.object.compare.exception.CompareException;
 import com.cloudfun.base.tool.object.compare.option.CompareOption;
 import com.cloudfun.base.tool.object.compare.tool.BeanCompare;
 import org.junit.jupiter.api.Assertions;
@@ -24,6 +27,23 @@ public class SimpleBeanCompareTest {
 
     Logger logger = LoggerFactory.getLogger(SimpleBeanCompareTest.class);
 
+    @Test
+    @DisplayName("testNull")
+    public void testNull() {
+        BeanCompare compare = new BeanCompare();
+        List<CompareResult> compareResult = compare.compare(null, null, null);
+        Assertions.assertEquals(0, compareResult.size());
+    }
+
+    @Test
+    @DisplayName("testDifBean")
+    public void testDifBean() {
+        Assertions.assertThrowsExactly(CompareException.class, () -> {
+            BeanCompare compare = new BeanCompare();
+            List<CompareResult> compareResult = compare.compare(new SimpleBean(), new SimpleBean1(), null);
+
+        });
+    }
 
     @Test
     @DisplayName("tesSimpleCompare")
@@ -97,6 +117,49 @@ public class SimpleBeanCompareTest {
         BeanCompare compare = new BeanCompare();
         List<CompareResult> compareResult = compare.compare(originBean, targetBean, option);
         Assertions.assertEquals(0, compareResult.size());
+
+    }
+
+    @Test
+    @DisplayName("tesSimpleCompareWithNameAnno")
+    public void tesSimpleCompareWithNameAnno() {
+        SimpleBeanWithAnno originBean = SimpleBeanWithAnno.createOriginBean();
+        SimpleBeanWithAnno targetBean = SimpleBeanWithAnno.createTargetBean();
+
+
+        CompareOption option = new CompareOption();
+
+        BeanCompare compare = new BeanCompare();
+        List<CompareResult> compareResult = compare.compare(originBean, targetBean, option);
+        Assertions.assertEquals(50, compareResult.size());
+
+        for (int i = 0; i < 50; i++) {
+            if (Integer.valueOf(42).equals(i) || Integer.valueOf(45).equals(i)) {
+                Assertions.assertEquals(CompareType.NONE, compareResult.get(i).getCompareType());
+            } else {
+                // System.out.println(compareResult.get(i).getFieldName());
+                Assertions.assertEquals(CompareType.CHANGE, compareResult.get(i).getCompareType());
+            }
+
+
+            Assertions.assertEquals(("name"+compareResult.get(i).getField()).toUpperCase(),
+                    compareResult.get(i).getFieldName().toUpperCase());
+
+        }
+    }
+
+    @Test
+    @DisplayName("tesSimpleCompareWithIgnoreAnno")
+    public void tesSimpleCompareWithIgnoreAnno() {
+        SimpleBeanWithAnno1 originBean = SimpleBeanWithAnno1.createOriginBean();
+        SimpleBeanWithAnno1 targetBean = SimpleBeanWithAnno1.createTargetBean();
+
+
+        CompareOption option = new CompareOption();
+
+        BeanCompare compare = new BeanCompare();
+        List<CompareResult> compareResult = compare.compare(originBean, targetBean, option);
+        Assertions.assertEquals(49, compareResult.size());
 
     }
 
