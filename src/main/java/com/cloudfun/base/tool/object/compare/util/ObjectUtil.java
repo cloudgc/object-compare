@@ -35,6 +35,9 @@ public class ObjectUtil {
         if (origin == null || target == null) {
             return false;
         }
+        if (origin == target) {
+            return true;
+        }
 
         if (origin instanceof Comparable<?>) {
             int i = ((Comparable) origin).compareTo(target);

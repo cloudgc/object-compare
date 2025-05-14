@@ -220,9 +220,9 @@ public class BeanCompare {
                 Optional<Map.Entry<Object, Deque<Object>>> targetEntry = targetIndexMap.entrySet().stream().filter(key -> ObjectUtil.isSame(key.getKey(),
                         originElement)).findFirst();
                 if (targetEntry.isEmpty()) {
-                    Deque<Object> originDeque = new ArrayDeque<>();
-                    originDeque.push(originElement);
-                    targetIndexMap.put(originElement, originDeque);
+                    Deque<Object> targetDeque = new ArrayDeque<>();
+                    targetDeque.push(originElement);
+                    targetIndexMap.put(originElement, targetDeque);
                 } else {
                     targetEntry.get().getValue().push(originElement);
                 }
@@ -247,41 +247,59 @@ public class BeanCompare {
             Optional<Map.Entry<Object, Deque<Object>>> targetEntry = targetIndexMap.entrySet().stream()
                     .filter(key -> ObjectUtil.isSame(key.getKey(), element)).findFirst();
 
-            Object originElement = null;
 
-            Object targetElement = null;
+            int originMax = 0;
+            int targetMax = 0;
             if (originEntry.isPresent() &&  !originEntry.get().getValue().isEmpty()) {
-                originElement = originEntry.get().getValue().pop();
+                originMax = originEntry.get().getValue().size();
+                // originElement = originEntry.get().getValue().pop();
             }
 
             if (targetEntry.isPresent() &&  !targetEntry.get().getValue().isEmpty()) {
-                targetElement = targetEntry.get().getValue().pop();
+                // targetElement = targetEntry.get().getValue().pop();
+                targetMax = targetEntry.get().getValue().size();
             }
 
-            //   primitive type collection
-            if (primitive) {
-                CompareResult result = new CompareResult();
-                result.setField(Integer.toString(fieldIndex));
-                result.setFieldName(Integer.toString(fieldIndex));
-                result.setCompareType(getCompareValueType(originElement, targetElement));
-                result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, beanFieldDetail, option));
-                result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, beanFieldDetail, option));
-                result.setChildren(Collections.emptyList());
-                compareResultList.add(result);
-            } else {
-                // ref bean type collection
-                CompareResult result = new CompareResult();
-                result.setField(Integer.toString(fieldIndex));
-                result.setFieldName(result.getField());
+            int valueMax = Math.max(originMax, targetMax);
+            for (int i = 0; i < valueMax; i++) {
+            Object originElement = null;
 
-                List<CompareResult> compareChildren = this.compare(originElement, targetElement, option);
-                result.setChildren(compareChildren);
+            Object targetElement = null;
 
-                CompareType compareType = this.getCompareTypeByResultList(compareChildren, originElement, targetElement);
-                result.setCompareType(compareType);
-                compareResultList.add(result);
+                if (originEntry.isPresent() &&  !originEntry.get().getValue().isEmpty()) {
+                    originElement = originEntry.get().getValue().pop();
+                }
+
+                if (targetEntry.isPresent() &&  !targetEntry.get().getValue().isEmpty()) {
+                    targetElement = targetEntry.get().getValue().pop();
+                }
+
+                //   primitive type collection
+                if (primitive) {
+                    CompareResult result = new CompareResult();
+                    result.setField(Integer.toString(fieldIndex));
+                    result.setFieldName(Integer.toString(fieldIndex));
+                    result.setCompareType(getCompareValueType(originElement, targetElement));
+                    result.setOriginValue(BeanValueFormat.primitiveFormat(originElement, beanFieldDetail, option));
+                    result.setTargetValue(BeanValueFormat.primitiveFormat(targetElement, beanFieldDetail, option));
+                    result.setChildren(Collections.emptyList());
+                    compareResultList.add(result);
+                } else {
+                    // ref bean type collection
+                    CompareResult result = new CompareResult();
+                    result.setField(Integer.toString(fieldIndex));
+                    result.setFieldName(result.getField());
+
+                    List<CompareResult> compareChildren = this.compare(originElement, targetElement, option);
+                    result.setChildren(compareChildren);
+
+                    CompareType compareType = this.getCompareTypeByResultList(compareChildren, originElement, targetElement);
+                    result.setCompareType(compareType);
+                    compareResultList.add(result);
+                }
+                fieldIndex++;
             }
-            fieldIndex++;
+
         }
         return compareResultList;
     }

@@ -3,6 +3,7 @@ package com.cloudfun.base.tool.object.compare.tests;
 import com.cloudfun.base.tool.object.compare.bean.CompareResult;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBean;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBean1;
+import com.cloudfun.base.tool.object.compare.bean.SimpleBeanCollection;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBeanWithAnno;
 import com.cloudfun.base.tool.object.compare.bean.SimpleBeanWithAnno1;
 import com.cloudfun.base.tool.object.compare.contants.CompareType;
@@ -162,6 +163,26 @@ public class SimpleBeanCompareTest {
         Assertions.assertEquals(49, compareResult.size());
 
     }
+
+    @Test
+    @DisplayName("tesSimpleCompareIgnoreSort")
+    public void tesSimpleCompareIgnoreSort() {
+        SimpleBeanCollection originBean = SimpleBeanCollection.createOriginBean();
+        SimpleBeanCollection targetBean = SimpleBeanCollection.createTargetBean();
+
+
+        CompareOption option = new CompareOption();
+
+        BeanCompare compare = new BeanCompare();
+        List<CompareResult> compareResult = compare.compare(originBean, targetBean, option);
+
+        Assertions.assertEquals(CompareType.NONE, compareResult.get(0).getCompareType());
+
+        Assertions.assertEquals(4, compareResult.get(0).getChildren().size());
+
+
+    }
+
 
 
 }
